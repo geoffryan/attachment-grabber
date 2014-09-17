@@ -4,7 +4,7 @@ import imaplib
 import os
 import time
 
-def grab_attachments(user, server, folder, out_dir):
+def grab_attachments(user, server, folder, out_dir, includeUser=False):
 # Downloads all attachments from "folder" in account "user" on "server".
 # Places in directories in "out_dir" named by sender emails.
 
@@ -44,6 +44,9 @@ def grab_attachments(user, server, folder, out_dir):
         name, addr = email.utils.parseaddr(headers['From'])
         date = email.utils.parsedate(headers['Date'])
 
+        if not includeUser and addr == user:
+            continue
+
         for part in mail.walk():
             if part.get_content_maintype() == 'multipart':
                 continue
@@ -56,9 +59,10 @@ def grab_attachments(user, server, folder, out_dir):
                 if not os.path.isdir(dir):
                     os.system("mkdir -p " + dir)
 
-                filePath = os.path.join(dir, fileName)
+                filePath = os.path.join(dir, fileName.replace(" ",""))
+                print(addr + ": " + fileName)
+                
                 if filePath not in files:
-                    print(addr + ": " + fileName)
                     fp = open(filePath, 'wb')
                     fp.write(part.get_payload(decode=True))
                     fp.close()
